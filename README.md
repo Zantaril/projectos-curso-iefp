@@ -1,12 +1,12 @@
 
 
-Mini Dungeon RPG – C++ Game Engine
+**Mini Dungeon RPG – C++ Game Engine
 Description
 
 A text-based dungeon RPG built in C++ as a learning project. Players explore a multi-floor dungeon, battle enemies, collect items, and level up their character.
 Designed to practice object-oriented programming, file I/O, and game mechanics in C++.
 
-Features
+**Features
 
 Player and enemy classes with full stats (HP, ATK, DEF, XP, etc.)
 
@@ -20,7 +20,7 @@ Save/load system for player progress and inventory
 
 Simple combat mechanics: attack, block, escape, and healing
 
-Learning Goals / Skills Demonstrated
+**Learning Goals / Skills Demonstrated
 
 C++ object-oriented programming (classes, getters/setters, encapsulation)
 
@@ -32,7 +32,7 @@ Vector and container management for dynamic items and enemies
 
 Debugging and problem-solving while building a playable system
 
-Future Improvements
+**Future Improvements
 
 Expand combat system with additional skills and enemy types
 
