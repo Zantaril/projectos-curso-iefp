@@ -1,42 +1,51 @@
+Mini Dungeon RPG – C++ Game 
 
-
-Mini Dungeon RPG – C++ Game Engine
-Description
+Descrição:
 
 A text-based dungeon RPG built in C++ as a learning project. Players explore a multi-floor dungeon, battle enemies, collect items, and level up their character.
 Designed to practice object-oriented programming, file I/O, and game mechanics in C++.
 
-Features
+Um RPG de texto feito em C++ como projeto de parendizagem. O jogador explorará uma dungeon, batalha com enimigos, ganha itens e niveis.
 
-Player and enemy classes with full stats (HP, ATK, DEF, XP, etc.)
+Este projecto tem como foco a aprendizagem de programação orientada a objectos, gerir I/O de ficheiros, assim como estruturar dados, lógica e organização
+dos seus sistemas e mecânicas.
 
-Inventory system with consumable potions and equipable gear
+Principais características:
 
-Leveling system with scaling stats and XP progression
 
-Multi-floor dungeon with increasing difficulty and boss encounters
+Classes para o jogador e enimigo com setters e getters para os seus respectivos stats.
 
-Save/load system for player progress and inventory
+Sistema de inventário do jogador, com consumiveis e equipamento
 
-Simple combat mechanics: attack, block, escape, and healing
+Sistema de progreção do jogador com aumento de stats e progressão com base em XP.
 
-Learning Goals / Skills Demonstrated
+Um primeiro nivel com enimigos cada vez mais fortes e um "boss" no final do piso.
 
-C++ object-oriented programming (classes, getters/setters, encapsulation)
+Sistema de gravação de dados, tanto os stats do jogador, assim como o seus itens adquiridos
 
-File input/output for persistent game saves
+Sistema de combate com mecânicas simples: Ataque, bloquear, escapar e curar HP com recurso a itens.
 
-Conditional logic and combat calculations
+Competências adquiridas/demonstradas:
+
+
+
+Programação orientada a objetos em C++.
+
+
+Persistência e tratamento de dados através do sistema de save/load.
 
 Vector and container management for dynamic items and enemies
 
-Debugging and problem-solving while building a playable system
+Competências de debugging e resolução de problemas durante a construção deste projecto.
 
-Future Improvements
 
-Expand combat system with additional skills and enemy types
 
-Add more floors, bosses, and loot variety
+Futuras melhorias/implementações:
 
-Implement equipment management with unique item effects
+Completar o primeiro piso com progressão e desafios legitimos. 
+
+Adicionar mais variadade de enimigos, skills(dar pontos por level up, permitir que o jogador os distribua, arquetipos para o jogador),
+sistema de magia com feitiços, sistema de combate mais robusto com recurso a tipos de dano(blunt, slash, pierce, ect...).
+
+Criar um sistema de gestão de itens e recursos mais forte e interessante.
 
