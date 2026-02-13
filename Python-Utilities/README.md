@@ -1,5 +1,5 @@
-Simple Password Generator in Python
+Um simples gerador de passwords feito em Python
 
-Description
+Descrição:
 
-Gathers words randomly from a file and mixes them with symbols.
+Junta palavras, escolhidas aleatóriamnete a partir do ficheiro .txt anexado e mistura simbolos entre elas.
