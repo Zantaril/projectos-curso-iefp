@@ -9,19 +9,22 @@
 #include <ctime>
 #include <vector>
 #include <algorithm>
+#include <cctype>
 #include "ASSETS.h"
 
-/* I started using this when it was a very small project,
-then i got ambitous and here we are.*/ 
+// Gonçalo Fonseca PI06 
+
+
 using namespace std; 
 /*
-This project is a small dungeon RPG ,4  floors total.
+This project is a small dungeon RPG
 Player objective, for now, is to get gear, grow stronger
 and defeat the final boss to escape the dungeon.
 
+MOnster xp tweaked for demo.
+
 Defence and Attack are capped at 99, all math takes this into account. Max player Level is 45.
 */
-
                             // Timed Clear
 void cls(int time) {
 	cout<<endl;
@@ -32,17 +35,91 @@ void cls(int time) {
 	system("clear");
     #endif
 }
-                            // Pause with enter
+                          // Pause with enter
 void PauseEnter() {
-	cin.ignore(numeric_limits<streamsize>::max(), '\n');
-	cout << "";
-	cin.get();
+
+    if (cin.peek() == '\n' || cin.peek() == ' ') {
+        cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    }
+    
+    cin.get();
 }
 
-class Character{
+class Item {
+private:
+    string name;
+    int atk;
+    int def;
+    int hp;
+    bool consume; 
+
 public:
+    Item(string iname, int iatk = 0, int idef = 0, int iHp = 0, bool iconsume = false)
+        : name(iname), atk(iatk), def(idef), hp(iHp), consume(iconsume) {}
+
+    string getItemName() const { return name; }
+    int getItemATK() const { return atk; }
+    int getItemDEF() const { return def; }
+    int getItemHP() const { return hp; }
+    bool checkIfConsumable() const { return consume; }
+
+    bool operator==(const Item& other) const {
+        return name == other.name;
+    }
+};
+
+class Mob {
+public:
+    Mob(const string& name, int lv, int hp, int atk, int def, int xp, const string& asciiArt)
+        : name(name), Lv(lv), HP(hp), ATK(atk), DEF(def), XP(xp), ASCII(asciiArt) {}
+
+    const string& getName() const { return name; }
+    int getLv() const { return Lv; }
+    int getHP() const { return HP; }
+    void addHP(int add) { HP += add;}
+    int getATK() const { return ATK; }
+    int getDEF() const { return DEF; }
+    int getXP() const {return XP; }
+
+    void printASCII() const {
+        cout << ASCII << "\n";
+    };
+
+    void MobInfoBar() {
+        cout << "\n" << setw(30) << name << endl;
+        cout << "               +-----+-------+-----+-----+" << endl;
+        cout << "               | LV  |   HP  | ATK | DEF |" << endl;
+        cout << "               +-----+-------+-----+-----+" << endl;
+        cout << "               | " 
+                                    << setw(3) << Lv << " | "
+                                    << setw(5) << HP << " | "
+                                    << setw(4) << ATK << "| "
+                                    << setw(4) << DEF << "|" << endl;
+        cout << "               +-----+-------+-----+-----+" << endl;
+    }
+
+
+private:
+    string name;
+    int Lv, HP, ATK, DEF,XP;
+    string ASCII;
+};
+
+class Character{
+
+private:
+    string nome;
+    int Lv,HP,MaxHP,ATK,DEF,XP;
+    vector<Item> player_inventory;
+    int equipped_weapon;
+    int equipped_shield;
+ 
+
+public:
+
     Character(const string& nome): 
-        nome(nome), Lv(0), HP(0), MaxHP(0),ATK(0), DEF(0), XP(0) {}
+        nome(nome), Lv(0), HP(0), MaxHP(0),ATK(0), DEF(0), XP(0),
+        player_inventory{}, equipped_weapon(-1), equipped_shield(-1) {}
 
     const string& getNome() const{return nome;}
     void setNome(const string& alt) {nome = alt;}
@@ -76,251 +153,193 @@ public:
     void addXP(int add) {XP += add;}
     void clearXP() {XP = 0;}
 
+
+    void equipWeapon(int index){
+
+    if (equipped_weapon != -1) {
+        addATK(-player_inventory[equipped_weapon].getItemATK());
+    }
+
+    equipped_weapon = index;
+
+    addATK(player_inventory[index].getItemATK());
+    }
+    
+   void equipShield(int index){
+
+    if (equipped_shield != -1) {
+        addDEF(-player_inventory[equipped_shield].getItemDEF());
+        addMaxHP(-player_inventory[equipped_shield].getItemHP());
+    }
+
+    equipped_shield = index;
+
+    addDEF(player_inventory[index].getItemDEF());
+    addMaxHP(player_inventory[index].getItemHP());
+}
+    
+    // inventory logic here
+    const vector<Item>& getInventory() const { return player_inventory; }
+    
+    void addItem(const Item& item) { player_inventory.push_back(item);}
+    
+    bool hasItem(const Item& itemToFind) const {
+        for (const auto& item : player_inventory) {
+            if (item == itemToFind) { 
+                return true; 
+            }
+        }
+        return false; 
+    }
+    
+    int countItem(const Item& itemToFind) const {
+        int total = 0;
+        for (const auto& item : player_inventory) {
+            if (item == itemToFind) {
+            total++;
+            }
+        }
+        return total;
+    }
+    
+    void UseConsumable(const Item& consumable){   
+
+        auto pot = find(player_inventory.begin(), player_inventory.end(), consumable); 
+        
+        if(pot == player_inventory.end()){ 
+        
+            cout <<"\nYou don't have any "<< consumable.getItemName()<<" left."<< endl;
+            PauseEnter();
+            
+        };
+
+        if(HP == MaxHP){cout << "\nYou're already full health!" << endl;PauseEnter(); return;}
+        
+        if(pot != player_inventory.end()){
+        
+            addHP(consumable.getItemHP());
+            if(HP > MaxHP) setHP(MaxHP);
+
+            cout << "\nYou used your " << pot -> getItemName() <<". It heals for "<< pot -> getItemHP() <<" HP!" <<endl;
+            player_inventory.erase(pot);
+            
+            PauseEnter();
+        }
+    };
+
+    
     void saveGame() const {
         string nomeFile = nome + ".sav";
         ofstream out(nomeFile);
-        out << nome << endl
-            << Lv << endl
-            << HP << endl
-            << MaxHP << endl
-            << ATK << endl
-            << DEF << endl
-            << XP << endl;
+            
+        out << nome << "\n" << Lv << "\n" << HP << "\n" 
+            << MaxHP << "\n" << ATK << "\n" << DEF << "\n" << XP << endl;
+        
+        out << player_inventory.size() << endl;
+        for (const auto& item : player_inventory) {
+            out << item.getItemName() << endl;
+            out << item.getItemATK() << " "
+                << item.getItemDEF() << " "
+                << item.getItemHP() << " "
+                << item.checkIfConsumable() << endl; 
+        }
     }
 
-    bool loadGame() {
-        string nomeFile = nome + ".sav";
-        ifstream in(nomeFile);
-        if(!in) return false;
+   bool loadGame() {
+    string nomeFile = nome + ".sav";
+    ifstream in(nomeFile);
+    if(!in) return false;
 
-        getline(in, nome);
-        in >> Lv >> HP >> MaxHP >> ATK >> DEF >> XP;
-        return true;
+    getline(in >> ws, nome);
+    in >> Lv >> HP >> MaxHP >> ATK >> DEF >> XP;
+
+    size_t inventorySize;
+    if (in >> inventorySize) {
+        player_inventory.clear();
+        for (size_t i = 0; i < inventorySize; i++) {
+            string iname;
+            int iatk, idef, ihp;
+            bool iconsume;
+            getline(in >> ws, iname);
+            in >> iatk >> idef >> ihp >> iconsume;
+            player_inventory.push_back(Item(iname, iatk, idef, ihp, iconsume));
+        }
     }
 
-private:
-    string nome;
-    int Lv,HP,MaxHP,ATK,DEF,XP;
+
+    if (equipped_weapon < 0 || equipped_weapon >= player_inventory.size())
+        equipped_weapon = -1;
+    if (equipped_shield < 0 || equipped_shield >= player_inventory.size())
+        equipped_shield = -1;
+
+    return true;
+}
 };
 
-class Mob {
-public:
-    Mob(const string& name, int lv, int hp, int atk, int def, int xp, const string& asciiArt)
-        : name(name), Lv(lv), HP(hp), ATK(atk), DEF(def), XP(xp), ASCII(asciiArt) {}
+Item dummy_item("N/A", 0, 0, 0); // to trick the compiler when it's acting up, mainly testing.
 
-    const string& getName() const { return name; }
-    int getLv() const { return Lv; }
-    int getHP() const { return HP; }
-    void addHP(int add) { HP += add;}
-    int getATK() const { return ATK; }
-    int getDEF() const { return DEF; }
-    int getXP() const {return XP; }
+Item sword_basic("Wood Plank", 10, 0, 0); 
+Item sword_advanced("Moonsword", 40, 0, 0);
 
-    void printASCII() const {
-        cout << ASCII << endl;
-    };
+Item shield_basic("Cauldron Lid", 0, 10, 100); //original value is 8 DEF, and 50 HP current for testing / demo
+Item shield_advanced("Mithril Shield", 0, 40, 700);
 
-    void MobInfoBar() {
-        cout << "\n" << setw(30) << name << endl;
-        cout << "               +-----+-------+-----+-----+" << endl;
-        cout << "               | LV  |   HP  | ATK | DEF |" << endl;
-        cout << "               +-----+-------+-----+-----+" << endl;
-        cout << "               | " 
-                                    << setw(3) << Lv << " | "
-                                    << setw(5) << HP << " | "
-                                    << setw(4) << ATK << "| "
-                                    << setw(4) << DEF << "|" << endl;
-        cout << "               +-----+-------+-----+-----+" << endl;
-    }
+Item potion_lesser("Lesser Health Potion", 0, 0, 100, true); 
+Item potion_medium("Medium Health Potion", 0, 0, 200, true);
+Item potion_greater("Greater Health Potion", 0, 0, 400, true);
 
+vector<Item> weapons_loot = {sword_basic, sword_advanced};
+vector<Item> shield_loot = {shield_basic,shield_advanced};
+vector<Item> potions_loot = {potion_lesser, potion_medium, potion_greater};
 
-private:
-    string name;
-    int Lv, HP, ATK, DEF,XP;
-    string ASCII;
-};
+Mob rival("default",0,0,0,0,0,""); // placeholder mob to make the compiler behave. Simpler than making class default for now.
 
-class Item {
-private:
-    string name;
-    int atk;
-    int def;
-    int hp; 
-
-public:
-    Item(string iname, int iatk = 0, int idef = 0, int iHp = 0)
-        : name(iname), atk(iatk), def(idef), hp(iHp) {}
-
-    string getItemName() const { return name; }
-    int getItemATK() const { return atk; }
-    int getItemDEF() const { return def; }
-    int getItemHP() const { return hp; }
-
-    bool operator==(const Item& other) const {
-        return name == other.name;
-    }
-};
-
-// 1st floor items
-Item sword_basic("Wood Plank", 22, 0, 0); // original value is 8 ATK, current for testing / demo
-Item shield_basic("Cauldron Lid", 0, 16, 150); //original value is 8 DEF, and 50 HP current for testing / demo
-Item potion_lesser("Lesser Potion", 0, 0, 50);
-
-// 2nd floor items
-Item sword_advanced("Steel Sword", 13, 0);
-Item shield_advanced("Bronze Shield", 0, 10 , 200);
-Item potion_medium("Medium Health Potion", 0, 0, 150);
-
-// 3rd floor items
-Item sword_final("Moonsword", 19, 0, 0); 
-Item shield_final("Mithril Shield", 0, 19, 500);
-Item potion_greater("Greater Health Potion", 0, 0, 350);
-
-vector<Item> first_floor_loot = {sword_basic, shield_basic, potion_lesser};
-vector<Item> second_floor_loot = {sword_advanced, shield_advanced, potion_medium};
-vector<Item> third_floor_loot = {sword_final, shield_final, potion_greater};
-
-Mob rival("default",0,0,0,0,0,""); // temporary placeholder mob to init the game, does nothing
-
-// Floor 1 enemies prison/catacombs
-Mob zombie("Zombie", 1, 110, 11, 8, 75, zombieART); // nome lv hp atk def xp, arte
-Mob skeleton("Skeleton", 4, 150, 20, 15, 105, skeletonART);
-Mob ghost("Ghost", 6, 120, 13, 35, 125, ghostART);
-Mob homunculus("Mindless Homunculus", 8, 320 , 20, 45, 145,humonculousART);
-
-// Floor 2 enemies lower floor, ground level:
-Mob crypt_stalker("Crypt Stalker", 15, 275, 25, 30, 165,""); // nome lv hp atk def xp arte
-Mob risen_squire ("Risen Squire", 25, 350 , 25, 25, 215,"");
-Mob wraith("Wraith", 35, 200, 35, 25, 265,"");
-Mob carrion_knight("Carrion Knight", 40, 400, 35, 40, 325,"");
-
-// Floor 3 enemies coutryard / top floor:
-Mob dread_acolyte("Dread Acolyte", 50, 300, 20, 20, 435,""); // nome lv hp atk def xp arte
-Mob death_knight ("Death knight", 65, 400, 30, 50, 515,"");
-Mob revenant("Revenant", 70, 550, 35, 45, 615,"");
-Mob fallen_hero("Fallen hero", 80, 650, 45, 45, 665,"");
-
+//Enemies
+Mob zombie("Zombie", 1, 110, 11, 8, 1000, zombieART); // name lv hp atk def xp, art
+Mob skeleton("Skeleton", 4, 150, 20, 15, 1200, skeletonART);
+Mob ghost("Ghost", 8, 120, 13, 35, 1940, ghostART);
+Mob homunculus("Mindless Homunculus", 12, 320 , 20, 45, 2200, humonculousART);
+Mob stalker("Crypt Stalker", 24, 200, 35, 25, 2900, stalkerART);
+Mob knight ("Death knight", 33, 400, 30, 50, 2900, death_knightART);
 // Bosses
-Mob gargoyle("Gargoyle",10, 500, 30, 50, 600, gargoyleART);               // boss 1st floor
-Mob bone_warden("Bone Warden",50, 600, 50, 60, 1000,"");                  // boss 2nd floor
-Mob pontifex_crassus("Pontifex Crassus", 90, 1500, 80, 80, 2500,"");      // boss 3rd floor
-Mob Lich("Velkharis, Malka HaNefesh HaNokhrei", 99, 4000, 99 , 99, 0,""); // floor 4;  only has this final boss fight,
-                                                                          // needs special mechanics to beat, TODO: everything....
+Mob boss1("Gargoyle", 40 , 1000, 60, 75, 3000, gargoyleART);                  // boss 1
+Mob final_boss("Pontifex Crassus", 45, 100, 80, 80, 9000, final_bossART);      // boss 2
 
-vector<Mob> mobs_first_floor = {zombie,skeleton,ghost,homunculus};
-vector<Mob> mobs_second_floor = {crypt_stalker,risen_squire,wraith,carrion_knight};
-vector<Mob> mobs_third_floor = {dread_acolyte, death_knight, fallen_hero, revenant, pontifex_crassus};
+struct Room {
+
+    int room_id;
+    string room_name; 
+    string map_art;    
+    vector<Mob> mobs;
+    vector<Item> loot;
+};
 
 struct Floor{
     
-    int floor_numb;
-    vector<Mob> mobs;
-    vector<Item> loot;
-    //floor characteristics if any 
+    string floor_at_name;
+    vector<Room> rooms;
 };
 
-Floor first_floor {1, mobs_first_floor, first_floor_loot};
-Floor second_floor{2, mobs_second_floor, second_floor_loot};
-Floor third_floor {3, mobs_third_floor, third_floor_loot};
+vector<Mob> mobs_first_floor = {zombie, skeleton, ghost, homunculus, stalker, knight};
 
-vector<Item> Inventory = {potion_lesser};
+Room hallway_First_Floor{ 0 ,"Stone corridor", dungeonHallArt, mobs_first_floor,{}};
+Room cell{ 1, "Cell", CellRoomArt, mobs_first_floor, weapons_loot};
+Room laboratory{ 2, "Laboratory", LaboratoryRoomArt,mobs_first_floor, shield_loot};
+Room inner_gates{ 3, "Inner Gates", arenaART, mobs_first_floor, {} };
+Room safe_room{ 4, "Abandoned Chapel", chapelArt, {}, potions_loot };
+Room final_room{ 5,"","",{},{}};
 
-            //      \\        HELPERS GO HERE      \\        //
-void saveGearFloor(Character & player, const vector<Item>& Inventory, int current_floor) {
-    ofstream out( player.getNome()+ "inventoryFloor.sav");
-    out << Inventory.size() << endl;
-    for (const auto& item : Inventory) {
-        out << item.getItemName() << endl;
-        out << item.getItemATK() << " "
-            << item.getItemDEF() << " "
-            << item.getItemHP() << endl;
-    }
-    out << current_floor << endl;
-}
-
-bool loadGearFloor(Character &player, vector<Item>& Inventory, int& current_floor) {
-    ifstream in(player.getNome()+ "inventoryFloor.sav");
-    if (!in) return false;
-
-    size_t invSize;
-    in >> invSize;
-    Inventory.clear();
-    for (size_t i = 0; i < invSize; i++) {
-        string name;
-        int atk, def, hp;
-
-        getline(in >> ws, name);
-        in >> atk >> def >> hp;
-
-        Inventory.push_back(Item(name, atk, def, hp));
-    }
-    in >> current_floor;
-    return true;
-}
-
-void saveGameWorld(Character & player, const vector<Item>& Inventory, int current_floor){
-    
-    saveGearFloor( player, Inventory, current_floor);
-    player.saveGame();
-};
-
-bool loadGameWorld(Character & player, vector<Item>& Inventory, int current_floor){
-    
-    loadGearFloor(player, Inventory, current_floor);
-    player.loadGame();
-    return true;
-};
-
-void useItem(Character &player, vector<Item> &Inventory, Item& consumable) 
-{   
-    auto pot = find(Inventory.begin(), Inventory.end(), consumable);
-
-
-    if(player.getHP() == player.getMaxHP()){
-
-        cout << "You're already full health!" << endl;
-        PauseEnter();
-
-    }else if(pot != Inventory.end()){
-        
-        player.addHP(consumable.getItemHP());
-        
-        if(player.getHP() > player.getMaxHP()) 
-        
-        player.setHP(player.getMaxHP());
-
-        cout << "You used your " << pot -> getItemName() <<". It heals for "
-            << pot -> getItemHP() <<" HP!" <<endl;
-            Inventory.erase(pot);
-            PauseEnter();
-    }else{
-
-        cout << "You don't any of that potion!"<< endl;
-        PauseEnter();
-    };
-};
-// TODO: add condition to remove obsolete gear from inventory, replace with better when it's found
-void checkItemGear(Character &player, vector<Item> &Inventory, Item& find_gear){
-    
-    auto gear = find(Inventory.begin(), Inventory.end(), find_gear);
-    
-    if(gear != Inventory.end()){
-        
-        player.addATK  (gear -> getItemATK());
-        player.addDEF  (gear -> getItemDEF());
-        player.addMaxHP(gear -> getItemHP());
-    
-    };
-};
-
-void LevelUp(Character &player, int &current_floor){    
+Floor dungeon_floor{"First Floor", { hallway_First_Floor, cell, laboratory, inner_gates, safe_room, final_room} };
+         
+        //      \\        HELPERS GO HERE      \\        //
+void LevelUp(Character &player){    
 
     while(player.getLv() < 45 && player.getXP() >= player.getLv() * 60 )
     {
         cls(1);
         player.addLv(1);
         
-        cout << "====================== " << endl;
+        cout << "===========================" << endl;
 
         if(player.getLv() <= 15){
             player.addATK(1);
@@ -348,22 +367,54 @@ void LevelUp(Character &player, int &current_floor){
         };
     
         cout << "\nCongratulations! You're now level " << player.getLv() << "!\n";
-        cout << "You now have " << player.getATK() << "ATK!\n";
+        cout << "\nYou now have " << player.getATK() << "ATK!\n";
         cout << "You now have " << player.getDEF() << "DEF!\n";
         cout << "You now have " << player.getMaxHP() << "HP!\n";
 
-        player.setXP(0);
+        cout << "===========================" << endl;
+
+        //player.setXP(0);
         player.setHP(player.getMaxHP());
-        saveGameWorld(player, Inventory, current_floor);
+        player.saveGame();
+        cout << "\nPress enter to continue..." << endl;
+        PauseEnter();
     };
 };
+
+void savePosition(Character &player, Floor &current_floor, Room &current_room) {
+    string nomeFile = player.getNome() + "_pos.sav";
+    ofstream out(nomeFile);
+    if(out.is_open()){
+        out << current_floor.floor_at_name << "\n";
+        out << current_room.room_name << endl;
+    }
+}
+
+bool loadPosition(Character &player, Floor &current_floor, Room &current_room) {
+    string nomeFile = player.getNome() + "_pos.sav";
+    ifstream in(nomeFile);
+    if(!in) return false;
+
+    string fName, rName;
+    getline(in >> ws, fName);
+    getline(in >> ws, rName);
+
+    for (const auto& r : current_floor.rooms) {
+        if (r.room_name == rName) {
+            current_room = r;
+            current_floor.floor_at_name = fName;
+            return true;
+        }
+    }
+    return false;
+}
 
 void CombatAttackLogic(Character &player, Mob &rival){
     
     int damage_player;
     int damage_rival;
     
-    damage_player = ceil((rand() % (player.getATK()+ 1) * (1 - (double)rival.getDEF()/100)));           
+    damage_player = ceil((rand() % (player.getATK() + 1) * (1 - (double)rival.getDEF()/100)));           
     if(damage_player < 0) damage_player = 0;
 
     if(player.getATK() >= 50){
@@ -373,7 +424,6 @@ void CombatAttackLogic(Character &player, Mob &rival){
 
     if(player.getATK() >= 2 * rival.getDEF()) damage_player *= 2;
         
-    
     damage_rival = ceil((rand() % (rival.getATK()+ 1) * (1 - (double)player.getDEF()/100))); 
     if(damage_rival < 0) damage_rival = 0;
 
@@ -381,12 +431,11 @@ void CombatAttackLogic(Character &player, Mob &rival){
     rival.addHP(-damage_player);
     PauseEnter();
             
-    if (rival.getHP() <= 0){
-    }else{ 
+    if (rival.getHP() > 0){
         cout<< rival.getName() <<" attacked back! You lost " << damage_rival <<"HP.";
         player.addHP(-damage_rival);
         PauseEnter(); 
-    } 
+    }; 
 };
 
 void CombatBlockLogic(Character &player, Mob &rival){
@@ -415,7 +464,7 @@ void CombatBlockLogic(Character &player, Mob &rival){
     }
 };
 
-bool CombatEscapeLogic(Character &player, Mob &rival, int &current_floor){
+bool CombatEscapeLogic(Character &player, Mob &rival, Floor &current_floor, Room &current_room){
 
     int damage_rival;
 
@@ -424,22 +473,23 @@ bool CombatEscapeLogic(Character &player, Mob &rival, int &current_floor){
 
     if(rand() % 100 < max(player.getDEF()-rival.getATK(), 5)){
         cout << "You managed to escape from " << rival.getName() <<"..." << endl;
-        PauseEnter();
-        saveGameWorld(player, Inventory, current_floor);
+        sleep(3);
+        player.saveGame();
+        savePosition(player,current_floor, current_room);
         return true;
     }else{ 
         damage_rival = ceil((rand() % (rival.getATK()+ 1) * (1 - (double)player.getDEF()/100))); 
         if(damage_rival < 0) damage_rival = 0;
         
         cout<< rival.getName() <<" managed to catch you!" << endl;
-        cout<< rival.getName() <<" attacked back! You lost " << damage_rival <<"HP.";
+        cout<< rival.getName() <<" attacked you! You lost " << damage_rival <<"HP.";
         player.addHP(-damage_rival);
         PauseEnter();
         return false;
     };
 };
 
-void infoBar(Character &player){
+void PlayerInfoBar(Character &player){
 
     cout << R"(
                 //====================\\
@@ -466,36 +516,52 @@ void infoBar(Character &player){
 
 };
 
-bool combateInstance(Character &player, Mob &rival, int &current_floor, vector<Item> &Inventory, bool &isAlive){
+bool combateInstance(Character &player, Mob &rival, Floor &current_floor, Room &current_room, bool &isAlive){
     
-    saveGameWorld(player, Inventory, current_floor);
+    player.saveGame();
+    savePosition(player,current_floor, current_room);
     
     int player_action;
-
+    
     while(player.getHP() > 0 && rival.getHP() > 0){
         
-        int less;
-        int med;
-        int great;
-        less = count(Inventory.begin(), Inventory.end(), potion_lesser);
-        med = count(Inventory.begin(), Inventory.end(), potion_medium);
-        great = count(Inventory.begin(), Inventory.end(), potion_greater);
+        vector<string> item_slot(7, "Empty");
+        auto& show_inv = player.getInventory();
+
+        int ui_idx = 0;
+        for (int i = 0; i < show_inv.size() && ui_idx < 7; i++) {
+            
+            string current_item_name = show_inv[i].getItemName();
+            bool exists = false;
+
+            for (int j = 0; j < ui_idx; j++) {
+                if(item_slot[j] == current_item_name) {
+                    exists = true;
+                    break;
+                }
+            }
+            if(!exists) {
+                item_slot[ui_idx] = current_item_name;
+                ui_idx++; 
+            }
+        }
 
         cls(0.5);
-        
         rival.printASCII();
         rival.MobInfoBar();
-        infoBar(player);
+        PlayerInfoBar(player);
         cout << "\n"
-             <<"+-----------------------+" <<"---------------------------+" << "\n"
-             <<"|        1.Attack       |" <<" You have "<< less <<" lesser potions |" << "\n"
-             <<"+-----------------------+" <<"---------------------------+" << "\n"
-             <<"|        2.Block        |" <<" You have "<< med <<" medium potions |" << "\n"   
-             <<"+-----------------------+" <<"---------------------------+" << "\n"
-             <<"|        3.Escape       |" <<" You have "<< great <<" greater potions|" << "\n"
-             <<"+-----------------------+" <<"---------------------------+" << "\n"
-             <<"|        4.Heal         |" <<"    SWORD / SHIELD  (wip)  |" <<"\n"
-             <<"+-----------------------+" <<"---------------------------+" <<endl;
+             <<"+-----------------------+" <<"----------------------------------+" <<"\n" 
+             <<"|        ACTIONS        |" <<"           INVENTORY              |" <<"\n" 
+             <<"+-----------------------+" <<"----------------------------------+" <<"\n" 
+             <<"|        1.Attack       |" << setw(22)<<item_slot[0] <<" "<< player.countItem(item_slot[0]) <<"\n"  
+             <<"+-----------------------+" << setw(22)<<item_slot[1] <<" "<< player.countItem(item_slot[1]) <<"\n"
+             <<"|        2.Block        |" << setw(22)<<item_slot[2] <<" "<< player.countItem(item_slot[2]) <<"\n"
+             <<"+-----------------------+" << setw(22)<<item_slot[3] <<" "<< player.countItem(item_slot[3]) <<"\n"  
+             <<"|        3.Escape       |" << setw(22)<<item_slot[4] <<" "<< player.countItem(item_slot[4]) <<"\n"  
+             <<"+-----------------------+" << setw(22)<<item_slot[5] <<" "<< player.countItem(item_slot[5]) <<"\n"   
+             <<"|        4.Heal         |" << setw(22)<<item_slot[6] <<" "<< player.countItem(item_slot[6]) <<"\n"   
+             <<"+-----------------------+" <<"----------------------------------+" << endl;   
 
         cout << "\nChoose an option: ";
         if (!(cin >> player_action)) {
@@ -510,27 +576,27 @@ bool combateInstance(Character &player, Mob &rival, int &current_floor, vector<I
         {
             case 1: CombatAttackLogic(player, rival); break;
             case 2: CombatBlockLogic(player, rival); break;  
-            case 3: if(CombatEscapeLogic(player,rival,current_floor)) return true;
+            case 3: if(CombatEscapeLogic(player,rival, current_floor, current_room)) return true;
                     break;
             case 4:{
                     int potion_choice;
                     cout <<"Pick your potion: \n";
-                    cout << " 1.Lesser Potion. \n 2.Medium Potion. \n 3.Greater Potion.\n Choice:";
+                    cout << "1.Lesser Potion. \n 2.Medium Potion. \n 3.Greater Potion.\n Choice:";
                     if(!(cin >> potion_choice)){
                         cin.clear(); 
                         cout << "Choose a valid option.\n";
                         cls(1);
                         continue;
                     }switch (potion_choice){
-                        case 1: useItem(player,Inventory, potion_lesser);break;
-                        case 2: useItem(player,Inventory, potion_medium); break;
-                        case 3: useItem(player,Inventory, potion_greater);break;
+                        case 1: player.UseConsumable(potion_lesser);break;
+                        case 2: player.UseConsumable(potion_medium);break;
+                        case 3: player.UseConsumable(potion_greater);break;
                     }
             break;
                 } 
             default:
                 cout << "Choose a valid option\n.";
-                PauseEnter();
+                sleep(1);
                 continue;
         };
 
@@ -543,7 +609,7 @@ bool combateInstance(Character &player, Mob &rival, int &current_floor, vector<I
                     
                 player.addXP(rival.getXP());
                 cout << "You got " << rival.getXP() <<"XP!"<< endl;
-                LevelUp(player, current_floor);
+                LevelUp(player);
                 PauseEnter();
             }else{
                 cout << " You are at maximum level!" << endl;
@@ -560,7 +626,8 @@ bool combateInstance(Character &player, Mob &rival, int &current_floor, vector<I
             cin  >> player_exit_game;
             
             if (player_exit_game == 1){
-                loadGameWorld(player, Inventory, current_floor);
+                player.loadGame();
+                loadPosition(player, current_floor, current_room);
             }else if(player_exit_game != 1){
                 cout << "Until next time!";
                 PauseEnter();
@@ -569,13 +636,13 @@ bool combateInstance(Character &player, Mob &rival, int &current_floor, vector<I
             };
         };    
     };
-};
+}
 
-void monster_spawn(Character &player, Mob &rival, Floor &floor){
+void MonsterSpawn(Character &player, Mob &rival, Room &current_room){
 
     vector<Mob> eligible; 
 
-    for (auto& i : floor.mobs) 
+    for (auto& i : current_room.mobs) 
     {
         if(i.getLv() <= player.getLv() || player.getLv() == 45 ){
             eligible.push_back(i);
@@ -588,69 +655,395 @@ void monster_spawn(Character &player, Mob &rival, Floor &floor){
     }
 };
 
-// MAIN GAME LOGIC HERE, EVERYTHING BEFORE IS FOUNDATION
-// TODO: exploring, locations, item locations, 
-// combat triggers, miniboss fight conditions
-void gameLoop(Character &player, int current_floor){
+void recoveryPlayer(Character &player){
+
+    cout << "You sit down to rest a while..\n"
+         << "Would you like to use any items, or simply sit down?" << endl;
+    
+    cout << R"(
+    |.................|
+    |1. Lesser Potion |
+    |-----------------|
+    |2. Medium Potion |
+    |-----------------|
+    |3. Greater Potion|
+    |-----------------|
+    |4. Sit down      |
+    |.................|
+
+    Choice: )";
+
+    int rest_choice;
+    if(!(cin >> rest_choice)){
+        cin.clear(); 
+        cout << "Choose a valid option.\n";
+        cls(1);
+    }
+
+    switch (rest_choice){
+        case 1: player.UseConsumable(potion_lesser); break;
+        case 2: player.UseConsumable(potion_medium); break;
+        case 3: player.UseConsumable(potion_greater);break;
+        case 4: cout << "You catch your breath." << endl;
+                player.addHP(20);
+                if(player.getHP() > player.getMaxHP()) player.setHP(player.getMaxHP());
+                PauseEnter();
+                break;
+    }
+}
+// Exploration, searching rooms logic and functions here
+void enconterRate(int enconter_chance, Character &player, Mob &rival, Floor &current_floor, Room &current_room, bool &isAlive){
+
+
+    int combat_chance = rand() % 100;
+    if (combat_chance < enconter_chance){
+
+        MonsterSpawn(player,rival,current_room);
+        cout << "A " << rival.getName() <<" has appeared. It seems hostile!"<< endl;
+        rival.printASCII();
+        
+        PauseEnter();
+        combateInstance(player, rival, current_floor, current_room, isAlive);
+    };
+     
+}
+//TODO: Final boss room enter conditions.
+void PlayerExplore(Character &player, Floor &current_floor, Room &current_room, bool &isAlive){
+    
+   
+    enconterRate(35, player, rival, current_floor, current_room, isAlive);
+    cls(1);
+    current_room = dungeon_floor.rooms[0];
+    cout << current_room.map_art << endl;
+    cout << "\nYou navigate through the "<< current_room.room_name <<".\n" << endl;
+    
+    
+    char player_movement;
+   
+    cout << "Where are you turning to? (N, S, W, E)"<< endl;
+    if (!(cin >> player_movement)) {
+    cin.clear(); 
+    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+    cout <<"Choose a valid option." << endl;
+    cls(1);
+    };
+    
+    player_movement = toupper(player_movement);
+    
+    switch (player_movement)
+    {
+
+    case 'N':
+        current_room = dungeon_floor.rooms[2];
+        cout << "You arrived at the "<< current_room.room_name << endl;
+        enconterRate(20, player, rival, current_floor, current_room, isAlive);
+        PauseEnter();
+        break;
+
+    case 'S':
+        current_room = dungeon_floor.rooms[1];
+        cout << "You returned back to your "<< current_room.room_name << endl;
+        enconterRate(20, player, rival, current_floor, current_room, isAlive);
+        PauseEnter();
+        break;
+
+    case 'E':
+        if(player.getLv() < 30){
+            enconterRate(100,player, rival, current_floor, current_room, isAlive);// FOR GRINDING UNTIL PLAYER CAN ENTER, BOSS FIGHT AFTER. CAPS KEY STUCK.
+            cls(1);
+            cout << dungeon_floor.rooms[3].map_art << endl;
+            cout << "You're not strong enough to open the door to the Arena...\n"
+                 << "Return when you're stronger." << endl;
+                PauseEnter();
+            break;
+        }else{
+            current_room = dungeon_floor.rooms[3];
+            cout << "You arrived at the "<< current_room.room_name << endl;
+            PauseEnter();
+
+            cout << "\nThe doors open slowly, revealing a menacing figure inside." << endl;
+            combateInstance(player, final_boss, current_floor, current_room, isAlive);
+            PauseEnter();
+            // boss fight later
+            // add flag for cleared boss
+            // open door after boss fight
+            // final boss fight
+        }
+        break;
+
+    case 'W':
+        current_room = dungeon_floor.rooms[4];
+        cout << "You arrived at the "<< current_room.room_name 
+             << "\nYou feel oddly at peace here." << endl;
+            PauseEnter();
+        break;
+
+    default:
+        cout << "You see nothing of interest." << endl;
+        break;
+    }    
+    PauseEnter();
+}
+
+void LookAround(Character &player, Room &current_room){
+
+    if(current_room.room_id == 0){ //hallway
+        cout << "You see nothing but a cold, empty corridor." << endl;
+
+    }else if(current_room.room_id == 1){ // cell
+        
+        cout << "\nYou see chains hanging on the wall and a single barred window.\n" << endl;
+        
+        if(!player.hasItem(sword_advanced)){
+       
+            player.addItem(sword_advanced);
+            cout << "\nYou found a "<< sword_advanced.getItemName()<< " on the floor.\nYou take it with you." << endl;
+           
+
+        }else{
+            
+            cout << "\nThere is nothing of value left." << endl;
+
+        };
+        PauseEnter();
+    }else if(current_room.room_id == 2){ // lab
+
+        cout << "\nTheres shelfs with vials filled with strange liquids, a large couch sits in the middle of the room.\n"
+             << "A filing cabinet sits in the corner by itself, empty.\n" << endl;
+        
+            if(!player.hasItem(shield_advanced)){
+                
+                player.addItem(shield_advanced);
+
+                cout << "\nYou found a "<< shield_advanced.getItemName()<< " on the floor.\nYou take it with you." << endl;
+            
+            }else{
+            
+                cout << "\nThere is nothing of value left to take." << endl;
+                
+            };  
+            PauseEnter();  
+    }else if(current_room.room_id == 3){ // arena
+
+        cout << "\nYou stare at the giant double doors in front of you.\n"
+             << "Nothing else stands out in this room.\n" << endl;
+            PauseEnter();
+
+    }else if(current_room.room_id == 4){ // chapel
+        
+        int potion_find_chance = rand() % 100;
+        
+        if(potion_find_chance <= 4){ 
+            
+            if(player.countItem(potion_greater) > 1)
+            { 
+                cout <<"You cannot carry any more Greater potions";
+            
+            }else{
+            player.addItem(potion_greater);
+            
+            cout << "\nLucky find!\nA greater potion appeared on the altar. \nYou take it with you." <<endl;
+            
+            }
+            PauseEnter();
+        }else if(potion_find_chance <= 14){
+        
+            if(player.countItem(potion_medium) > 2)
+            { 
+                cout <<"You cannot carry any more Medium potions";
+            }else{
+
+            player.addItem(potion_medium);
+            cout << "\nDecent fortune.\nA medium potion appeared on the altar. \nYou take it with you." <<endl;
+            
+            }
+        }else if(potion_find_chance <= 50){
+        
+            if(player.countItem(potion_lesser) > 3){ 
+                cout <<"You cannot carry any more Lesser potions";
+            }else{
+            player.addItem(potion_lesser);
+            cout << "\nSmall luck.\nYou found a lesser potion on the altar. \nYou take it with you." <<endl;
+            
+            }   
+        }else{
+
+            cout<<"It seems you are unfortunate.\nYou found nothing.";
+            
+        }   
+        PauseEnter();
+    };
+}
+
+// Main game loop and intro here, everything before is foundation
+void gameLoop(Character &player, Floor &current_floor, Room &current_room){
     
     cls(0.5);
 
     bool isAlive = true;
-
     bool game_active = true;
-    
+
     while(game_active && isAlive){
-    
-        // add loop to set get items from inventory, assign each of them to 1-5 variable, 
-        // then use that to display
-        int less;
-        int med;
-        int great;
-        less = count(Inventory.begin(), Inventory.end(), potion_lesser);
-        med = count(Inventory.begin(), Inventory.end(), potion_medium);
-        great = count(Inventory.begin(), Inventory.end(), potion_greater);
+        
+        cls(1);
     
         int player_interaction;
-        
-        cout << playerArt << endl;
+        cout << current_room.map_art << endl;
         cout
-        << "+-----------------------+-----------------------------+\n"
-        << "|      1.Explore        |            INVENTORY        |\n"
-        << "+-----------------------+-----------------------------+\n"
-        << "|      2.Look around    | " << "  "<<"    sword       " << setw(12) << "|\n"
-        << "+-----------------------+ " << "  "<<"    shield      " << setw(12) << "|\n"
-        << "|      3.Rest           |    " << less << " Lesser Potion" << setw(12) << "|\n"
-        << "+-----------------------+    " << med  << " Medium Potion" << setw(12) << "|\n"
-        << "|      4.Save           |    " << great<< " Greater Potion"<< setw(11) <<"|\n"
-        << "+-----------------------+-----------------------------+\n"
-        << "Choose your option:";
+        << "+-----------------------+ +---------------------------------------+\n"
+        << "|   1.Explore           | |                   STATUS              |\n"
+        << "+-----------------------+ +---------------------------------------+\n"
+        << "|   2.Search around     | |    LEVEL:         "<<player.getLv()<< setw(21) <<"|\n" 
+        << "+-----------------------+ |    HEALTH:        "<<player.getHP()<<" / "<<player.getMaxHP()<< setw(13) <<"|\n"
+        << "|   3.Rest              | |    ATTACK:        "<<player.getATK()<< setw(20) <<"|\n"
+        << "+-----------------------+ |    DEFENCE:       "<<player.getDEF()<< setw(20) <<"|\n"
+        << "|   4.Save              | |    CURRENT XP:    "<<player.getXP()<< setw(21) <<"|\n"
+        << "+-----------------------+ |    NEXT LEVEL XP: "<<player.getLv() * 60<< setw(20) <<"|\n"
+        << "|   5.Save and Exit     | |                                       |\n"
+        << "+-----------------------+ |                                       |\n"
+        << "|   6.Equip Item        | |                                       |\n" 
+        << "+-----------------------+ +---------------------------------------+\n"
+        << "What would you like to do now?\nR: ";
 
         if (!(cin >> player_interaction)) {
-        cin.clear(); 
-        cin.ignore(numeric_limits<streamsize>::max(), '\n'); 
-        cout << "Choose a valid option.\n";
-        cls(1);
-        continue; 
+            cin.clear(); 
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout <<"Choose a valid option." << endl;
+            cls(1);
+            continue;
         }
-        monster_spawn(player, rival, first_floor);
-        combateInstance(player, rival, current_floor, Inventory, isAlive);
-        
-        if(!isAlive) {
-                game_active = false;
-        };
-    };
-    
-};
-void intro()
-{
 
-    int current_floor = 1;
+        switch (player_interaction)
+        { 
+            case 1:
+                PlayerExplore(player, current_floor ,current_room, isAlive);
+                break;
+        
+            case 2:
+                LookAround(player, current_room);
+                break;
+        
+            case 3:
+                if(current_room.room_id == 4){ 
+
+                    recoveryPlayer(player);
+                
+                }else{
+                
+                    cout << "You feel too uneasy to rest here. You should seek sanctuary.";
+                    PauseEnter();
+                }
+                break;
+        
+            case 4:
+
+                player.saveGame();
+                savePosition(player,current_floor,current_room);
+                cout << "\n";
+                cout << "Your progress been saved.\n" << endl;
+                cout << "Press enter to continue..." << endl;
+                PauseEnter();
+                break;
+        
+            case 5:
+
+                cout << "\n";
+                cout << "Your progress has been saved.\n" << endl;
+                cout << "Press enter to exit the game..." << endl;
+                player.saveGame();
+                savePosition(player,current_floor,current_room);
+                PauseEnter();
+                game_active = false;
+                break;
+            
+            case 6:
+
+                const auto& temp_invent = player.getInventory();
+                
+           
+                bool hasEquipable = false;
+
+                for (const auto& item : temp_invent)
+                {
+                    if (!item.checkIfConsumable()) 
+                    {
+                        hasEquipable = true;
+                        break;
+                    }
+                }
+
+                if (!hasEquipable)
+                {
+                    cout << "You have no equipable items.\n";
+                    PauseEnter();
+                    break;
+                }
+
+                cout << "Choose an item to equip:\n";
+
+                for (size_t item_index = 0; item_index < temp_invent.size(); item_index++)
+                {
+                    if (!temp_invent[item_index].checkIfConsumable()) 
+                    {
+                        cout << item_index  << ": " << temp_invent[item_index].getItemName() << endl;
+                    }
+                }
+
+                int item_choice_player;
+
+                if (!(cin >> item_choice_player))
+                    {
+                    cout << "Invalid choice.\n";
+                    PauseEnter();
+                    break;
+                    }
+
+                if (temp_invent[item_choice_player].getItemATK() > 0) 
+                {
+                
+                    player.equipWeapon(item_choice_player);
+
+                } else if (temp_invent[item_choice_player].getItemDEF() > 0){
+                    
+                    player.equipShield(item_choice_player);
+                
+                } else {
+                
+                    cout << "This item cannot be equipped.\n";
+                
+                    break;
+                }
+
+                cout << "You equipped the " << temp_invent[item_choice_player].getItemName() << endl;
+                PauseEnter();
+                break;
+
+        }
+            
+        if(!isAlive) {
+
+            game_active = false;
+            cout << "You lost." << endl;
+        }
+    }
+}
+
+
+void intro(Floor &current_floor, Room &current_room){
+    
+    cls(0);
+
+    bool new_player = true;
     char nome[22];
+
+    cout << coverArt << endl;
+    cout << "Welcome to the world.\n" << endl;
     
     cout << "What are you called?:\n";
     cin.getline(nome, 22);
 
     Character player(nome);
+    string saved_floor, saved_room;
 
     if(!player.loadGame()){
         player.setLv(1);
@@ -659,17 +1052,35 @@ void intro()
         player.setATK(15);
         player.setDEF(15);
         player.setXP(0);
+        new_player = true;
     } else {
-        loadGameWorld(player, Inventory, current_floor);
-        cout << "Welcome back! Let's continue your adventure..." << endl;
+        cout << "Welcome back! Press enter to continue your adventure..." << endl;
+            player.loadGame();
+            loadPosition(player,current_floor, current_room);
+            new_player = false;
+            PauseEnter();
+        
+        }
+    
+    if(new_player == true){
+
+        player.saveGame();
+        savePosition(player,current_floor,current_room);
+        cout << "\nWelcome to this small game! This is a singular floor \n"
+            << "dungeon crawler. For now you can beat up enemies to level up 45, \n"
+            << "find some items(search the rooms!) and there's a boss fight at the end. \n\n"
+            << "Press enter to start and have fun! " << endl;
+            
         PauseEnter();
-    }
-    saveGameWorld(player, Inventory, current_floor);
-    gameLoop(player, 1);
+    };
+
+    gameLoop(player, current_floor, current_room);
 };
 
 int main(){
 srand(time(NULL));
-intro();
+Room starting_room = dungeon_floor.rooms[1];
+intro(dungeon_floor, starting_room);
 return 0;
 };
+
