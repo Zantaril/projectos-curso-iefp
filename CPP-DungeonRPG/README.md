@@ -1,51 +1,60 @@
-Dungeon RPG C++
+**Dungeon RPG C++**
 
-Pequeno projeto de RPG de dungeon feito em C++ como exercício de programação orientada a objectos.
+  Pequeno projeto de RPG de dungeon feito em C++ como exercício de programação orientada a objectos.
 
-Descrição
 
-O objectivo do jogador é explorar a dungeon, lutar contra inimigos e derrotar o chefe final para escapar. O jogo foca-se em combate por turnos, evolução do personagem e recolha de itens.
+**Descrição**
 
-Funcionalidades
+  O objectivo do jogador é explorar a dungeon, lutar contra inimigos e derrotar o boss final para escapar. O jogo foca-se em combate por turnos, evolução do personagem e recolha de itens.
 
-Sistema de combate por turnos (Atacar, Bloquear, Fugir, Usar Poção).
 
-Itens equipáveis (armas e escudos) e consumíveis (poções de vida).
+**Funcionalidades**
 
-Sistema de níveis e experiência (até nível 45).
+  Sistema de combate por turnos (Atacar, Bloquear, Fugir, usar consumiveis).
 
-Exploração de diferentes salas com encontros aleatórios.
+  Itens equipáveis (armas e escudos) e consumíveis (poções de vida).
 
-Salvamento e carregamento do progresso.
+  Sistema de níveis e experiência (até nível 45).
 
-ASCII art para inimigos, personagem e salas.
+  Exploração de diferentes salas com encontros aleatórios.
 
-Compilação
+  Save e Load do progresso.
 
-Certifica-te de que tens um compilador C++ compatível (ex: g++).
-Compilar com:
+  ASCII art para inimigos, personagem e salas.
 
-g++ -o DungeonRPG main.cpp
 
-Executar com:
+**Compilação**
 
-./DungeonRPG
-Estrutura do Projeto
+  Certifique-se de que tem um compilador C++ compatível (ex: g++).
 
-main.cpp – Contém toda a lógica do jogo.
 
-ASSETS.h – ASCII art de inimigos, salas e ecrãs de vitória/derrota.
+**Compilar com:**
 
-Jogabilidade
+    g++ -o DungeonRPG main.cpp
 
-Escolhe um nome para o personagem.
 
-Explora salas, encontra itens e enfrenta inimigos.
+**Executar com:**
 
-Evolui o teu personagem, equipa melhores armas e escudos.
+     ./DungeonRPG
 
-Derrota o chefe final para vencer o jogo.
 
-Autor
+**Estrutura do Projeto**
+
+ /nmain.cpp – Contém toda a lógica do jogo.
+
+ ASSETS.h – ASCII art de inimigos, salas e ecrãs de vitória/derrota.
+
+
+**Jogabilidade**
+
+  Escolha um nome para o personagem.
+
+  Explore salas, encontre itens e enfrente inimigos.
+
+  Evolua o seu personagem, equipe melhores armas e escudos.
+
+  Derrote o boss final para vencer o jogo.
+
+**Autor**
 
 Gonçalo Fonseca – PI06
