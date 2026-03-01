@@ -8,4 +8,4 @@ in symbols and numbers to then creat a password.
 
  Run the script in the terminal:
  
-     python passwordgenerator.py
+     python PwGenerator.py
