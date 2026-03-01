@@ -5,4 +5,6 @@
 
 **To run**
 
-  Simply run the file on your terminal of choice.
+  Simply run the file on your terminal:
+  
+    python converter.py
