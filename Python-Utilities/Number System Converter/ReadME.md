@@ -7,4 +7,12 @@
 
   Simply run the file on your terminal:
   
-    python converter.py
+    python binHexConverter.py
+
+**Example output**
+  
+  Choose an integer to convert into Octal.
+  
+  R: 511
+  
+  511 in Octal is:  777
