@@ -1,8 +1,4 @@
-'''
 
-Small Decimal to Binary, Hexadecimal and Octal converter made for fun.
-
-'''
 def BinConverter():
     
     user_number = int(input("Choose an integer to convert into binary.\nR: "))
