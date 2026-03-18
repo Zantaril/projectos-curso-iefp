@@ -1,0 +1,62 @@
+{
+    "USERBASE": [
+        {
+            "username": "admin",
+            "password": "APassword",
+            "admin": true
+        },
+        {
+            "username": "cliente",
+            "password": "CPassword",
+            "admin": false
+        },
+        {
+            "username": "test",
+            "password": "testPassword",
+            "admin": false
+        },
+        {
+            "username": "1",
+            "password": "2",
+            "admin": false
+        }
+    ],
+    "Products": [
+        {
+            "Brand": "TOYOTA",
+            "Model": "YARIS",
+            "Traction": "FRONT",
+            "Kms": "200K",
+            "Year": "2000",
+            "License Plate": "QR-90-ST",
+            "Price": "20k"
+        },
+        {
+            "Brand": "HONDA",
+            "Model": "CIVIC",
+            "Traction": "FRONT",
+            "Kms": "500K",
+            "Year": "1991",
+            "License Plate": "MN-78-OP",
+            "Price": "200k"
+        },
+        {
+            "Brand": "SEAT",
+            "Model": "IBIZA",
+            "Traction": "FRONT",
+            "Kms": "800K",
+            "Year": "2001",
+            "License Plate": "IJ-56-KL",
+            "Price": "300k"
+        },
+        {
+            "Brand": "PORSCHE",
+            "Model": "PANAMERA",
+            "Traction": "4X4",
+            "Kms": "20K",
+            "Year": "2010",
+            "License Plate": "EF-34-GH",
+            "Price": "60K"
+        }
+    ]
+}
